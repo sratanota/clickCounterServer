@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket Counter</title>
+</head>
+
+<body>
+
+    <h1>Real-Time Counter</h1>
+
+    <h2 id="counter">0</h2>
+
+    <button onclick="sendClick()">Click Me</button>
+
+    <script>
+
+        const ws = new WebSocket("wss://localhost:4000")
+
+        ws.onmessage = (event) => {
+
+            const msg = JSON.parse(event.data)
+
+            if (msg.type === "counter") {
+                document.getElementById("counter").innerText = msg.value
+            }
+        }
+
+        function sendClick() {
+            ws.send(JSON.stringify({
+                type: "click"
+            }))
+        }
+
+    </script>
+
+</body>
+
+</html>
