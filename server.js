@@ -23,9 +23,18 @@ wss.on("connection", (ws) => {
     console.log("client connected")
 
     ws.send(JSON.stringify({
+        type: "status",
+        message: "connected"
+    }))
+
+    ws.send(JSON.stringify({
         type: "counter",
         value: counter
     }))
+
+    ws.on("close", () => {
+        console.log("client disconnected")
+    })
 
     ws.on("message", (data) => {
 
