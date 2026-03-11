@@ -2,35 +2,114 @@
 <html>
 
 <head>
-    <title>WebSocket Counter</title>
+    <title>Click Counter Game</title>
 </head>
 
 <body>
 
-    <h1>Real-Time Counter</h1>
+    <h1>Click Counter Game</h1>
 
-    <h2 id="counter">0</h2>
+    <div>
+        Status: <span id="status">Disconnected</span>
+    </div>
 
-    <button onclick="sendClick()">Click Me</button>
+    <div>
+        Players:
+        <ul id="players"></ul>
+    </div>
+
+    <h2>Counter: <span id="counter">0</span></h2>
+
+    <input id="nameInput" placeholder="Enter your name">
+
+    <button onclick="register()">Register</button>
+
+    <button id="clickBtn" onclick="sendClick()" disabled>
+        Click
+    </button>
+
+    <button onclick="connect()">Retry</button>
 
     <script>
 
-        const ws = new WebSocket("wss://clickcounterserver.onrender.com")
+        let ws
 
-        ws.onmessage = (event) => {
+        function setStatus(text) {
+            document.getElementById("status").innerText = text
+        }
 
-            const msg = JSON.parse(event.data)
+        function connect() {
 
-            if (msg.type === "counter") {
-                document.getElementById("counter").innerText = msg.value
+            setStatus("Connecting...")
+
+            ws = new WebSocket("wss://clickcounterserver.onrender.com")
+
+            ws.onopen = () => {
+                setStatus("Connected")
             }
+
+            ws.onmessage = (event) => {
+
+                const msg = JSON.parse(event.data)
+
+                if (msg.type === "playerList") {
+                    updatePlayers(msg.data.players)
+                }
+
+                if (msg.type === "start") {
+                    document.getElementById("clickBtn").disabled = false
+                }
+
+                if (msg.type === "counter") {
+                    document.getElementById("counter").innerText = msg.data.value
+                }
+
+                if (msg.type === "serverFull") {
+                    alert(msg.data.message)
+                }
+
+            }
+
+            ws.onclose = () => {
+                setStatus("Disconnected")
+                document.getElementById("clickBtn").disabled = true
+            }
+
+        }
+
+        function register() {
+
+            const name = document.getElementById("nameInput").value
+
+            ws.send(JSON.stringify({
+                type: "register",
+                data: { name }
+            }))
         }
 
         function sendClick() {
+
             ws.send(JSON.stringify({
                 type: "click"
             }))
         }
+
+        function updatePlayers(players) {
+
+            const list = document.getElementById("players")
+            list.innerHTML = ""
+
+            players.forEach(p => {
+
+                const li = document.createElement("li")
+                li.innerText = p
+
+                list.appendChild(li)
+
+            })
+        }
+
+        connect()
 
     </script>
 
